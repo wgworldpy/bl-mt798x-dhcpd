@@ -178,11 +178,7 @@ jobs:
           echo "- Source repo: ${{ env.REPO_URL }}" >> release.txt
           echo "- Branch: ${{ env.REPO_BRANCH }}" >> release.txt
           echo "- ATF version: $CONFIG_ATF_VERSION" >> release.txt
-          if [ "$CONFIG_ATF_OC" = "true" ]; then
-            echo "- OC profile: Enabled (MT7981 1600MHz)" >> release.txt
-          else
-            echo "- OC profile: Disabled" >> release.txt
-          fi
+          echo "- OC profile: Enabled (MT7981 1600MHz)" >> release.txt
           echo "- Target config: mt798x_atf/normal/mt7981-ddr3-bga.config" >> release.txt
           echo "- DRAM profile: DDR3 BGA; verify exact board DRAM initialization before flashing" >> release.txt
           echo "- ARMPLL target: 1600MHz" >> release.txt
