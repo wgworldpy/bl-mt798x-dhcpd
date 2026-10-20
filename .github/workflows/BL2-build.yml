@@ -16,7 +16,7 @@ on:
       REPO_URL:
         description: 'Source repository'
         required: true
-        default: 'https://github.com/Yuzhii0718/bl-mt798x-dhcpd'
+        default: 'https://github.com/wgworldpy/bl-mt798x-dhcpd'
         type: string
       REPO_BRANCH:
         description: 'Repository branch'
@@ -130,7 +130,7 @@ jobs:
           echo "CONFIG_BUILD_LOG=y" >> .config
 
           # Run defconfig to fill in missing values
-          make defconfig 2>&1 || true
+          make defconfig 2>&1
 
           # Show final .config
           echo "=== Generated .config ==="
