@@ -104,39 +104,6 @@ jobs:
           set -euo pipefail
           sudo -E apt-get -qq install $(cat bl-mt798x-dhcpd/depends/ubuntu-22.04)
 
-      - name: Generate .config
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd bl-mt798x-dhcpd
-
-          # Generate .config for ATF build
-          echo "# CONFIG_BUILD_FIP is not set" > .config
-          echo "CONFIG_BUILD_ATF=y" >> .config
-          echo "# CONFIG_BUILD_GPT is not set" >> .config
-
-          # Version selection
-          echo "# CONFIG_VERSION_2025 is not set" >> .config
-          echo "# CONFIG_VERSION_SP1 is not set" >> .config
-          echo "# CONFIG_VERSION_SP2 is not set" >> .config
-          case "$CONFIG_ATF_VERSION" in
-            2025) echo "CONFIG_VERSION_2025=y" >> .config ;;
-            SP1) echo "CONFIG_VERSION_SP1=y" >> .config ;;
-            SP2) echo "CONFIG_VERSION_SP2=y" >> .config ;;
-          esac
-
-          # SILENT and BUILD_LOG defaults
-          echo "CONFIG_SILENT=y" >> .config
-          echo "CONFIG_BUILD_LOG=y" >> .config
-
-          # Run defconfig to fill in missing values
-          make defconfig 2>&1
-
-          # Show final .config
-          echo "=== Generated .config ==="
-          cat .config
-          echo "========================="
-
       - name: Validate DDR3 target
         shell: bash
         run: |
