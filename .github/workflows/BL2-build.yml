@@ -137,43 +137,32 @@ jobs:
           cat .config
           echo "========================="
 
-      - name: Prepare ATF inputs
+      - name: Validate DDR3 target
         shell: bash
         run: |
           set -euo pipefail
           cd bl-mt798x-dhcpd
-
-          if [ "$CONFIG_ATF_OC" = "true" ]; then
-            if [ -d "mt798x_atf/mt7981" ]; then
-              echo "Enable mt7981 OC profile"
-              shopt -s dotglob nullglob
-              cp -af mt798x_atf/mt7981/* mt798x_atf/ || true
-            else
-              echo "Warning: mt798x_atf/mt7981 not found, skipping"
-            fi
-            if [ -d "mt798x_atf/mt7986" ]; then
-              echo "Enable mt7986 OC profile"
-              shopt -s dotglob nullglob
-              cp -af mt798x_atf/mt7986/* mt798x_atf/ || true
-            else
-              echo "Warning: mt798x_atf/mt7986 not found, skipping"
-            fi
-          else
-            echo "OC profile not enabled (ATF_OC=false)"
+          test -f mt798x_atf/normal/mt7981-ddr3-bga.config
+          grep -qx '_PLAT_MT7981=y' mt798x_atf/normal/mt7981-ddr3-bga.config
+          grep -qx '_MT7981_BOARD_BGA=y' mt798x_atf/normal/mt7981-ddr3-bga.config
+          if grep -qx '_DRAM_DDR4=y' mt798x_atf/normal/mt7981-ddr3-bga.config; then
+            echo "ERROR: DDR4 flag present in DDR3 target" >&2
+            exit 1
           fi
 
-      - name: Build ATF
+      - name: Build targeted DDR3 BGA 1600MHz BL2 candidate
         id: atf
         shell: bash
         run: |
           set -euo pipefail
           cd bl-mt798x-dhcpd
-          chmod +x ./build.sh
           chmod +x ./compile_atf.sh
-          # Use make build target
-          make build 2>&1
-          echo "FILE_DATE=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_ENV
-          echo "status=success" >> $GITHUB_OUTPUT
+          VERSION="$CONFIG_ATF_VERSION" CFG_SUBDIR=normal OC7981=16 ./compile_atf.sh mt7981-ddr3-bga
+          test -d output_bl2
+          find output_bl2 -maxdepth 1 -type f \( -name '*.img' -o -name '*.bin' \) -print -quit | grep -q .
+          find output_bl2 -maxdepth 1 -type f -printf '%f\\n'
+          echo "FILE_DATE=$(date +"%Y.%m.%d-%H%M")" >> "$GITHUB_ENV"
+          echo "status=success" >> "$GITHUB_OUTPUT"
 
       - name: Organize files and rename
         id: organize
@@ -223,10 +212,13 @@ jobs:
           echo "- Branch: ${{ env.REPO_BRANCH }}" >> release.txt
           echo "- ATF version: $CONFIG_ATF_VERSION" >> release.txt
           if [ "$CONFIG_ATF_OC" = "true" ]; then
-            echo "- OC profile: Enabled" >> release.txt
+            echo "- OC profile: Enabled (MT7981 1600MHz)" >> release.txt
           else
             echo "- OC profile: Disabled" >> release.txt
           fi
+          echo "- Target config: mt798x_atf/normal/mt7981-ddr3-bga.config" >> release.txt
+          echo "- DRAM profile: DDR3 BGA; verify exact board DRAM initialization before flashing" >> release.txt
+          echo "- ARMPLL target: 1600MHz" >> release.txt
           echo "- Build time: ${{ env.FILE_DATE }}" >> release.txt
 
           echo "" >> release.txt
